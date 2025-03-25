@@ -1,7 +1,7 @@
 import flet as ft
 
 def main(page: ft.Page):
-    page.title = "LOGIN PAGE"
+    page.title = "SELECCIONAR OPCION"
     page.window_width = 400
     page.window_height = 600
     page.horizontal_alignment = "center"
