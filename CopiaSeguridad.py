@@ -3,7 +3,7 @@ import os
 from crontab import CronTab
 
 def main(page: ft.Page):
-    page.title = "Copias de Seguridad Programadas"
+    page.title = "COPIA SEGURIDAD"
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
 
     # Campos de entrada para los directorios
