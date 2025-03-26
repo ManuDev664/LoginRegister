@@ -2,6 +2,7 @@ import flet as ft
 from UsersBBDD import *
 from datetime import datetime
 
+
 def main(page: ft.Page):
     page.title = "LOGIN PAGE"
     page.window_width = 400
@@ -19,7 +20,7 @@ def main(page: ft.Page):
 
     # Dropdown para elegir el rol
     rol = ft.Dropdown(
-        label="Selecciona el rol",
+        label="Selecciona el rol", width=400,
         options=[
             ft.dropdown.Option("user", "Usuario"),
             ft.dropdown.Option("admin", "Administrador")
@@ -114,16 +115,24 @@ def main(page: ft.Page):
             set_mensaje("Login exitoso!", "green")
             page.clean()
 
-            # Imprimir el valor del rol para verificarlo
-            print(f"Rol del usuario: {user[10]}")  # Esto es para ver el valor real del rol en la base de datos.
-
-            # Verificar si el usuario tiene rol de admin
+            # Verificar el rol del usuario
             if user[10] == "admin":  # Asegúrate de que user[10] tiene el rol de admin
                 mostrar_home(user[1], ultimo_login, es_admin=True)
             else:
                 mostrar_home(user[1], ultimo_login, es_admin=False)
+
+            # Agregar un botón para iniciar la aplicación
+            page.add(
+                ft.ElevatedButton("Iniciar Aplicación", on_click=iniciar_aplicacion, bgcolor="blue", color="white")
+            )
+
+            page.update()
         else:
             set_mensaje("Email/Usuario o contraseña incorrectos. Por favor, intenta nuevamente.", "red")
+
+    def iniciar_aplicacion(e):
+        import ActionSelector  # Aquí se importa el archivo ActionSelector.py
+        ActionSelector.main(page)  # Llamar a la función principal del archivo ActionSelector
 
     def mostrar_home(nombre_usuario, ultimo_login, es_admin=False):
         page.clean()
@@ -138,7 +147,9 @@ def main(page: ft.Page):
         # Si el usuario tiene rol de administrador, agregar el botón de "Panel de Administrador"
         if es_admin:
             column_elements.append(
-                ft.ElevatedButton("Panel de Administrador", on_click=lambda e: panel_admin(nombre_usuario, ultimo_login), bgcolor="purple", color="white")
+                ft.ElevatedButton("Panel de Administrador",
+                                  on_click=lambda e: panel_admin(nombre_usuario, ultimo_login), bgcolor="purple",
+                                  color="white")
             )
 
         page.add(ft.Column(column_elements, alignment="center"))
@@ -173,6 +184,7 @@ def main(page: ft.Page):
         mostrar_login()
 
     mostrar_login()
+
 
 if __name__ == "__main__":
     ft.app(target=main)

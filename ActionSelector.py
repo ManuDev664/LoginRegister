@@ -3,6 +3,7 @@ import os
 import signal
 from crontab import CronTab
 
+
 def main(page: ft.Page):
     page.title = "SELECCIONAR OPCIÓN"
     page.window_width = 400
@@ -20,7 +21,7 @@ def main(page: ft.Page):
 
     # Dropdown con evento on_change
     opcion_drop = ft.Dropdown(
-        label="Selecciona opción",
+        label="Selecciona opción", width=400,
         options=[
             ft.dropdown.Option("Control Usuarios"),
             ft.dropdown.Option("Copia Seguridad"),
@@ -89,13 +90,18 @@ def main(page: ft.Page):
         src_input = ft.TextField(label="Directorio de Origen", width=400)
         dest_input = ft.TextField(label="Directorio de Destino", width=400)
 
+        # Lista de los días de la semana
+        days_of_week = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+
+        # Dropdown para seleccionar el día de la semana
+        day_dropdown = ft.Dropdown(label="Día de la Semana", width=400,
+                                   options=[ft.dropdown.Option(i) for i in days_of_week])
+
         minutes = [str(i).zfill(2) for i in range(60)]
         hours = [str(i).zfill(2) for i in range(24)]
-        days = [str(i) for i in range(1, 32)]
 
         minute_dropdown = ft.Dropdown(label="Minuto", width=400, options=[ft.dropdown.Option(i) for i in minutes])
         hour_dropdown = ft.Dropdown(label="Hora", width=400, options=[ft.dropdown.Option(i) for i in hours])
-        day_dropdown = ft.Dropdown(label="Día del Mes", width=400, options=[ft.dropdown.Option(i) for i in days])
 
         result_text = ft.Text()
 
@@ -114,37 +120,40 @@ def main(page: ft.Page):
             if not src or not dest:
                 show_alert("Error", "Debes introducir ambos directorios.")
                 return
-            if not minute or not hour or not day:
-                show_alert("Error", "Selecciona una hora válida para la copia de seguridad.")
-                return
-            if not os.path.exists(src):
-                show_alert("Error", f"El directorio de origen '{src}' no existe.")
-                return
-            if not os.path.exists(dest):
-                show_alert("Error", f"El directorio de destino '{dest}' no existe.")
-                return
-
-            command = f"rsync -av {src}/ {dest}/"
 
             cron = CronTab(user=True)
-            job = cron.new(command=command, comment="Copia de Seguridad Programada")
-            job.minute.on(int(minute))
-            job.hour.on(int(hour))
-            job.day.on(int(day))
+            job = cron.new(command=f"cp -r {src} {dest}")
+
+            # Convertir el día de la semana a un formato que crontab reconozca
+            # Lunes -> 1, Martes -> 2, ..., Domingo -> 7
+            days_mapping = {
+                "Lunes": 1, "Martes": 2, "Miércoles": 3, "Jueves": 4, "Viernes": 5, "Sábado": 6, "Domingo": 7
+            }
+
+            cron_day = days_mapping.get(day, "*")  # Por defecto, se ejecutaría todos los días si no se encuentra el día
+
+            # Programar la tarea en crontab para el día de la semana seleccionado
+            job.setall(f"{minute} {hour} * * {cron_day}")
+
             cron.write()
 
-            show_alert("Éxito", f"Copia de seguridad programada para el {day} a las {hour}:{minute}.")
+            show_alert("Copia Programada", f"Copia de seguridad programada para {minute}:{hour} del {day}.")
 
-        btn_schedule = ft.ElevatedButton("Programar Copia de Seguridad", on_click=schedule_backup)
+        btn_schedule = ft.ElevatedButton("Programar Copia", on_click=schedule_backup)
         btn_volver = ft.ElevatedButton("Volver", on_click=lambda e: vista_principal())
 
         page.add(
             ft.Column(
                 [
                     ft.Text("Copia de Seguridad", size=20, weight="bold"),
-                    src_input, dest_input,
-                    minute_dropdown, hour_dropdown, day_dropdown,
-                    btn_schedule, result_text, btn_volver
+                    src_input,
+                    dest_input,
+                    minute_dropdown,
+                    hour_dropdown,
+                    day_dropdown,
+                    btn_schedule,
+                    result_text,
+                    btn_volver
                 ],
                 alignment="center",
                 horizontal_alignment="center"
@@ -152,6 +161,7 @@ def main(page: ft.Page):
         )
 
     vista_principal()
+
 
 if __name__ == "__main__":
     ft.app(target=main)
