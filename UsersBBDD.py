@@ -5,7 +5,7 @@ import psycopg2.errors
 def conectar_db():
     try:
         conn = psycopg2.connect(
-            dbname="login",
+            dbname="UserControl",
             user="postgres",
             password="1234",
             host="localhost",
