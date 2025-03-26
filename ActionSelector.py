@@ -93,9 +93,9 @@ def main(page: ft.Page):
         hours = [str(i).zfill(2) for i in range(24)]
         days = [str(i) for i in range(1, 32)]
 
-        minute_dropdown = ft.Dropdown(label="Minuto", options=[ft.dropdown.Option(i) for i in minutes])
-        hour_dropdown = ft.Dropdown(label="Hora", options=[ft.dropdown.Option(i) for i in hours])
-        day_dropdown = ft.Dropdown(label="Día del Mes", options=[ft.dropdown.Option(i) for i in days])
+        minute_dropdown = ft.Dropdown(label="Minuto", width=400, options=[ft.dropdown.Option(i) for i in minutes])
+        hour_dropdown = ft.Dropdown(label="Hora", width=400, options=[ft.dropdown.Option(i) for i in hours])
+        day_dropdown = ft.Dropdown(label="Día del Mes", width=400, options=[ft.dropdown.Option(i) for i in days])
 
         result_text = ft.Text()
 
