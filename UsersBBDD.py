@@ -1,71 +1,84 @@
 import psycopg2
-from datetime import datetime
-import psycopg2.errors
 
-def conectar_db():
-    try:
-        conn = psycopg2.connect(
-            dbname="UserControl",
-            user="postgres",
-            password="1234",
-            host="localhost",
-            port="5432",
-            client_encoding="UTF8"  # Asegura que la conexión use UTF-8
-        )
-        return conn
-    except psycopg2.OperationalError as e:
-        print("Error de conexión a PostgreSQL:", e)
-        return None
+def get_connection():
+    return psycopg2.connect(
+        host="localhost",
+        database="ErciUsers",
+        user="postgres",
+        password="50_dam50"
+    )
 
-def verificar_usuario(usuario, password):
-    conn = conectar_db()
-    cur = conn.cursor()
-    try:
-        # Comprobar si el valor ingresado es un email o un nombre de usuario
-        query = "SELECT * FROM users WHERE (email = %s OR username = %s) AND password = %s"
-        cur.execute(query, (usuario, usuario, password))
-        user = cur.fetchone()
-        if user:
-            # Actualizamos el último login
-            cur.execute("UPDATE users SET ultimo_login = %s WHERE email = %s", (datetime.now(), user[3]))  # Usamos el email para actualizar el último login
+def create_users_table():
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS users (
+                    id serial primary key,
+                    nombre varchar(50) not null,
+                    apellidos varchar(50) not null,
+                    email varchar(100) unique not null,
+                    username varchar(50) not null,
+                    password varchar(50) not null,
+                    fechaNacimiento date not null,
+                    estado boolean default true,
+                    fechaRegistro timestamp default current_timestamp,
+                    rol varchar(5) default 'user',
+                    ultimo_login timestamp
+                );
+            """)
             conn.commit()
-        return user
-    finally:
-        cur.close()
-        conn.close()
 
-def registrar_usuario(nombre_usuario, apellidos_usuario, email, password, fecha_nacimiento, rol):
-    conn = conectar_db()
-    cur = conn.cursor()
-    try:
-        # Verificar si el nombre de usuario o el email ya están registrados
-        cur.execute("SELECT email FROM users WHERE email = %s", (email,))
-        if cur.fetchone():
-            return "Error: Email ya registrado"
+def get_user(username_or_email, password):
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT * FROM users WHERE (username=%s OR email=%s) AND password=%s
+            """, (username_or_email, username_or_email, password))
+            return cur.fetchone()
 
-        cur.execute("SELECT username FROM users WHERE username = %s", (nombre_usuario,))
-        if cur.fetchone():
-            return "Error: Nombre de usuario ya registrado"
+def update_last_login(user_id):
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE users SET ultimo_login = NOW() WHERE id = %s", (user_id,))
+            conn.commit()
 
-        # Insertar el nuevo usuario con nombre, apellidos, nombre de usuario, email, password, fecha de nacimiento y rol
-        cur.execute("""
-            INSERT INTO users (nombre, apellidos, username, email, password, fechaNacimiento, rol)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """, (nombre_usuario, apellidos_usuario, nombre_usuario, email, password, fecha_nacimiento, rol))
-        conn.commit()
-        return "Usuario registrado con éxito!"
-    finally:
-        cur.close()
-        conn.close()
+def insert_user(nombre, apellidos, username, email, password, fechaNacimiento):
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO users (nombre, apellidos, username, email, password, fechaNacimiento)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (nombre, apellidos, username, email, password, fechaNacimiento))
+            conn.commit()
+
+def user_exists(user_id):
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1 FROM users WHERE id = %s", (user_id,))
+            return cur.fetchone() is not None
 
 
 def eliminar_usuario(user_id):
-    conn = conectar_db()
-    cur = conn.cursor()
+    if not user_exists(user_id):
+        return False
+    conn = get_connection()
     try:
-        cur.execute("DELETE FROM users WHERE id = %s", (user_id,))  # Usar el ID en lugar del email
+        cur = conn.cursor()
+        cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
         conn.commit()
-        return "Usuario eliminado"
-    finally:
         cur.close()
+        return True
+    except Exception as e:
+        print(f"Error en delete_user: {e}")
+        return False
+    finally:
         conn.close()
+
+def check_user(username_or_email, password):
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT * FROM users WHERE (username = %s OR email = %s) AND password = %s
+            """, (username_or_email, username_or_email, password))
+            user = cur.fetchone()
+            return user
