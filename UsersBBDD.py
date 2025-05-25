@@ -2,11 +2,11 @@ import psycopg2
 
 def get_connection():
     return psycopg2.connect(
-        host="localhost",
+        host="192.160.51.150",
         database="ErciUsers",
         user="postgres",
         password="50_dam50",
-        port="4445"
+        port="5432"
     )
 
 def create_users_table():
