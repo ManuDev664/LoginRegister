@@ -5,7 +5,8 @@ def get_connection():
         host="localhost",
         database="ErciUsers",
         user="postgres",
-        password="50_dam50"
+        password="50_dam50",
+        port="4445"
     )
 
 def create_users_table():
